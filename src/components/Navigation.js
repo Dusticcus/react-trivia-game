@@ -11,7 +11,6 @@ function Navigation() {
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto">
                             <Nav.Link href="/game">Play</Nav.Link>
-                            <Nav.Link href="#link">Log In</Nav.Link>
                     </Nav>
                 </Navbar.Collapse>
             </Container>

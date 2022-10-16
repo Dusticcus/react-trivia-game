@@ -5,13 +5,14 @@ import { useEffect, useState } from 'react'
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
+import Dropdown from 'react-bootstrap/Dropdown';
+import Button from 'react-bootstrap/Button';
 
-let category = "&category=20"
+var he = require('he');
 
-let API_URL = `https://opentdb.com/api.php?amount=20&${category}&type=multiple`;
+
 
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -21,6 +22,8 @@ function shuffleArray(array) {
 }
 
 function Game() {
+
+    const [gameOn, setGameOn] = useState(false);
 
     const [apiResponse, setApiResponse] = useState(null);
 
@@ -36,8 +39,15 @@ function Game() {
     const [canClick, setCanClick] = useState(true);
     const [showSlider, setShowSlider] = useState(false);
     const [rangeValue, setRangeValue] = useState(100);
-    const [rangePercent, setRangePercent] = useState("%");
     const [rangeColor, setRangeColor] = useState("orange");
+
+
+    const [category, setCategory] = useState("");
+    const [difficulty, setDifficulty] = useState("");
+    let categories = [{ name: "Any", id: "" }, { name: "General Knowledge", id: "&category=9" }, { name: "Entertainment: Books", id: "&category=10" }]
+
+    let API_URL = `https://opentdb.com/api.php?amount=20${category}${difficulty}&type=multiple`;
+
     const handleAnswerClick = (event) => {
         let countdown = 3;
         let newRangeValue = 100;
@@ -77,27 +87,57 @@ function Game() {
         }
     }
 
-    useEffect(() => {
-        axios.get(`${API_URL}`).then(function (response) {
-            console.log(response.data.results[questionNumber]);
-            setApiResponse(response.data.results);
-            setQuestionText(response.data.results[questionNumber].question);
+    const handleCategoryClick = (event) => {
+        console.log(event.target.getAttribute("data-cat"));
+        setCategory(event.target.getAttribute("data-cat"));
+    }
 
-            let incAnswers = response.data.results[questionNumber].incorrect_answers;
-            let corAnswer = response.data.results[questionNumber].correct_answer;
-            setCorrectAnswer(corAnswer);
-            incAnswers.push(corAnswer)
-            shuffleArray(incAnswers);
-            setAnswerArray(incAnswers);
-        });
-    }, []);
+    const handleDifficultyClick = (event) => {
+        console.log(event.target.getAttribute("data-dif"));
+        setDifficulty(event.target.getAttribute("data-dif"));
+
+    }
+
+    const handlePlayClick = (event) => {
+        setGameOn(true);
+    }
+
+    useEffect(() => {
+        if (gameOn) {
+            axios.get(`${API_URL}`).then(function (response) {
+                console.log(response.data);
+                setApiResponse(response.data.results);
+                let codedQuestion = response.data.results[questionNumber].question;
+                let decodedQuestion = he.decode(codedQuestion);
+                let incAnswers = [];
+                setQuestionText(decodedQuestion);
+                let codedIncAnswers = response.data.results[questionNumber].incorrect_answers;
+                codedIncAnswers.map((answer) => {
+                    return incAnswers.push(he.decode(answer));
+
+                });
+                let corAnswer = he.decode(response.data.results[questionNumber].correct_answer);
+                setCorrectAnswer(corAnswer);
+                incAnswers.push(corAnswer)
+                console.log(incAnswers);
+                shuffleArray(incAnswers);
+                setAnswerArray(incAnswers);
+            });
+        }
+
+    }, [gameOn]);
 
     useEffect(() => {
         if (apiResponse && score < 10 && opponentScore < 10) {
-            setQuestionText(apiResponse[questionNumber].question);
+            setQuestionText(he.decode(apiResponse[questionNumber].question));
 
-            let incAnswers = apiResponse[questionNumber].incorrect_answers;
-            let corAnswer = apiResponse[questionNumber].correct_answer;
+            let incAnswers = [];
+            let codedIncAnswers = apiResponse[questionNumber].incorrect_answers;
+            codedIncAnswers.map((answer) => {
+                return incAnswers.push(he.decode(answer));
+
+            });
+            let corAnswer = he.decode(apiResponse[questionNumber].correct_answer);
             setCorrectAnswer(corAnswer);
             incAnswers.push(corAnswer)
             shuffleArray(incAnswers);
@@ -108,7 +148,7 @@ function Game() {
 
 
     return (
-        <Container fluid>
+        <Container className='mainContainer'>
             <Row>
                 <Col>
                     <h3>{questionText}</h3>
@@ -118,6 +158,43 @@ function Game() {
                         <Card className='cardHeight'>
                             <Card.Body>
                                 {/* <Card.Title></Card.Title> */}
+
+                                {!gameOn &&
+                                    <div>
+                                        <Dropdown>
+                                            <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                                Category
+                                            </Dropdown.Toggle>
+
+                                            <Dropdown.Menu>
+                                                {categories.map((cat) => {
+                                                    return (
+                                                        <Dropdown.Item data-cat={cat.id} onClick={handleCategoryClick}>
+                                                            {cat.name}
+                                                        </Dropdown.Item>
+                                                    )
+                                                })}
+                                            </Dropdown.Menu>
+                                        </Dropdown>
+
+                                        <Dropdown>
+                                            <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                                Difficulty
+                                            </Dropdown.Toggle>
+
+                                            <Dropdown.Menu>
+                                                <Dropdown.Item data-dif="&difficulty=easy" onClick={handleDifficultyClick}>Easy</Dropdown.Item>
+                                                <Dropdown.Item data-dif="&difficulty=medium" onClick={handleDifficultyClick}>Medium</Dropdown.Item>
+                                                <Dropdown.Item data-dif="&difficulty=hard" onClick={handleDifficultyClick}>Hard</Dropdown.Item>
+                                            </Dropdown.Menu>
+                                        </Dropdown>
+                                        <Button onClick={handlePlayClick}>Play!</Button>
+                                    </div>
+
+
+
+
+                                }
 
                                 {answerArray.map((results) => {
                                     return (
@@ -135,7 +212,7 @@ function Game() {
                 </Col>
             </Row>
             {showSlider &&
-                <Form.Range value={rangeValue} style={{width: `${rangeValue}%`, background:`${rangeColor}`, "border-radius": "25px", margin: "10px"}}/>
+                <Form.Range style={{ width: `${rangeValue}%`, background: `${rangeColor}`, "borderRadius": "25px", margin: "10px" }} />
             }
         </Container>
     )
