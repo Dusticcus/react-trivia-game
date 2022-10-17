@@ -51,35 +51,23 @@
   border: none;
 }
 
+.bigButton {
+  width: -webkit-fill-available;
+  height: -webkit-fill-available;
+}
+
+.questionArea {
+  display: flex;
+  align-items: center;
+}
+
 .card-text {
   border: none;
   border-bottom: 1px solid rgb(0, 0, 0);
   color: cornflowerblue;
   margin: auto;
   height: 15vh !important;
-  padding-top: 2rem;
   font-family: sans-serif;
-}
-
-@media screen and (max-width: 992px) {
-  .card-text {
-    background-color: green;
-    padding-top: 1.5rem;
-  }
-}
-
-@media screen and (max-width: 992px) {
-  .card-text {
-    background-color: red;
-    padding-top: 1rem;
-  }
-}
-
-@media screen and (max-width: 397px) {
-  .card-text {
-    background-color: blue;
-    padding-top: .5rem;
-  }
 }
 
 .card-text:hover {
@@ -127,6 +115,7 @@ input[type="range"]::-ms-track {
   margin: 25px;
 }
 
-.navbar-brand, .nav-link {
+.navbar-brand,
+.nav-link {
   color: rgb(75, 102, 170) !important;
 }

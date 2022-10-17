@@ -47,6 +47,7 @@ function Game() {
     let categories = [{ name: "Any", id: "" }, { name: "General Knowledge", id: "&category=9" }, { name: "Entertainment: Books", id: "&category=10" }]
 
     let API_URL = `https://opentdb.com/api.php?amount=20${category}${difficulty}&type=multiple`;
+    let optionsText = "Choose a category and/or difficulty. If you hit play without choosing, all individual question category and difficulty will be randomized.";
 
     const handleAnswerClick = (event) => {
         let countdown = 3;
@@ -65,14 +66,14 @@ function Game() {
             }
             let myInterval = setInterval(function () {
                 countdown--;
-                console.log(countdown);
+                // console.log(countdown);
             }, 1000);
 
             let rangeInterval = setInterval(function () {
                 setShowSlider(true);
                 newRangeValue = newRangeValue - 1;
                 setRangeValue(newRangeValue);
-                console.log(rangeValue)
+                // console.log(rangeValue);
             }, 30);
 
             setTimeout(() => {
@@ -102,8 +103,16 @@ function Game() {
         setGameOn(true);
     }
 
+    const handlePlayAgainClick = (event) => {
+        setGameOn(false);
+        setScore(0);
+    }
+
     useEffect(() => {
+        setQuestionText(optionsText);
         if (gameOn) {
+
+            setQuestionNumber(0);
             axios.get(`${API_URL}`).then(function (response) {
                 console.log(response.data);
                 setApiResponse(response.data.results);
@@ -142,6 +151,14 @@ function Game() {
             incAnswers.push(corAnswer)
             shuffleArray(incAnswers);
             setAnswerArray(incAnswers);
+        } else {
+            if (!gameOn) {
+                setQuestionText(optionsText);
+            } else if (score >= 10) {
+                setQuestionText("You Win!");
+            } else {
+                setQuestionText("You Lose!");
+            }
         }
     }, [questionNumber]);
 
@@ -149,9 +166,13 @@ function Game() {
 
     return (
         <Container className='mainContainer'>
+
             <Row>
-                <Col>
+                <Col className='questionArea'>
                     <h3>{questionText}</h3>
+                    {score > 0 &&
+                        <Button onClick={handlePlayAgainClick}>Play again?</Button>
+                    }
                 </Col>
                 <Col>
                     {answerArray &&
@@ -162,14 +183,14 @@ function Game() {
                                 {!gameOn &&
                                     <div>
                                         <Dropdown>
-                                            <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                            <Dropdown.Toggle variant="info" style={{ width: "100%" }} id="dropdown-basic">
                                                 Category
                                             </Dropdown.Toggle>
 
                                             <Dropdown.Menu>
                                                 {categories.map((cat) => {
                                                     return (
-                                                        <Dropdown.Item data-cat={cat.id} onClick={handleCategoryClick}>
+                                                        <Dropdown.Item key={cat.name} data-cat={cat.id} onClick={handleCategoryClick}>
                                                             {cat.name}
                                                         </Dropdown.Item>
                                                     )
@@ -178,17 +199,17 @@ function Game() {
                                         </Dropdown>
 
                                         <Dropdown>
-                                            <Dropdown.Toggle variant="success" id="dropdown-basic">
+                                            <Dropdown.Toggle variant="info" style={{ width: "100%" }} id="dropdown-basic">
                                                 Difficulty
                                             </Dropdown.Toggle>
 
                                             <Dropdown.Menu>
-                                                <Dropdown.Item data-dif="&difficulty=easy" onClick={handleDifficultyClick}>Easy</Dropdown.Item>
-                                                <Dropdown.Item data-dif="&difficulty=medium" onClick={handleDifficultyClick}>Medium</Dropdown.Item>
-                                                <Dropdown.Item data-dif="&difficulty=hard" onClick={handleDifficultyClick}>Hard</Dropdown.Item>
+                                                <Dropdown.Item key={"&difficulty=easy"}  data-dif="&difficulty=easy" onClick={handleDifficultyClick}>Easy</Dropdown.Item>
+                                                <Dropdown.Item key={"&difficulty=medium"} data-dif="&difficulty=medium" onClick={handleDifficultyClick}>Medium</Dropdown.Item>
+                                                <Dropdown.Item key={"&difficulty=hard"} data-dif="&difficulty=hard" onClick={handleDifficultyClick}>Hard</Dropdown.Item>
                                             </Dropdown.Menu>
                                         </Dropdown>
-                                        <Button onClick={handlePlayClick}>Play!</Button>
+                                        <Button variant="primary" style={{ width: "100%" }} onClick={handlePlayClick}>Play!</Button>
                                     </div>
 
 
@@ -196,10 +217,12 @@ function Game() {
 
                                 }
 
-                                {answerArray.map((results) => {
+                                {gameOn && answerArray.map((results) => {
                                     return (
-                                        <Card.Text key={results} data-answer={results} onClick={handleAnswerClick}>
-                                            {results}
+                                        <Card.Text key={Math.floor(Math.random() * 1000)}>
+                                            <Button className="bigButton" key={Math.floor(Math.random() * 100)} data-answer={results} onClick={handleAnswerClick}>
+                                                {results}
+                                            </Button>
                                         </Card.Text>
                                     )
                                 })}
@@ -211,9 +234,11 @@ function Game() {
                     }
                 </Col>
             </Row>
-            {showSlider &&
-                <Form.Range style={{ width: `${rangeValue}%`, background: `${rangeColor}`, "borderRadius": "25px", margin: "10px" }} />
-            }
+            <Row>
+                {showSlider &&
+                    <Form.Range style={{ width: `${rangeValue}%`, background: `${rangeColor}`, "borderRadius": "25px", marginTop: "10px" }} />
+                }
+            </Row>
         </Container>
     )
 }
