@@ -9,6 +9,7 @@ import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Dropdown from 'react-bootstrap/Dropdown';
 import Button from 'react-bootstrap/Button';
+import { Link } from 'react-router-dom';
 
 var he = require('he');
 
@@ -106,13 +107,15 @@ function Game() {
     const handlePlayAgainClick = (event) => {
         setGameOn(false);
         setScore(0);
+        setOpponentScore(0);
+        setApiResponse(null);
+        setQuestionNumber(0);
     }
 
     useEffect(() => {
-        setQuestionText(optionsText);
         if (gameOn) {
-
-            setQuestionNumber(0);
+            setQuestionText("Loading...");
+            setAnswerArray(["Question 1 Loading...","Question 2 Loading...","Question 3 Loading...","Question 4 Loading..."])
             axios.get(`${API_URL}`).then(function (response) {
                 console.log(response.data);
                 setApiResponse(response.data.results);
@@ -132,12 +135,14 @@ function Game() {
                 shuffleArray(incAnswers);
                 setAnswerArray(incAnswers);
             });
+        } else {
+            setQuestionText(optionsText);
         }
 
     }, [gameOn]);
 
     useEffect(() => {
-        if (apiResponse && score < 10 && opponentScore < 10) {
+        if (apiResponse && score < 1 && opponentScore < 10 && gameOn && questionNumber > 0) {
             setQuestionText(he.decode(apiResponse[questionNumber].question));
 
             let incAnswers = [];
@@ -151,14 +156,6 @@ function Game() {
             incAnswers.push(corAnswer)
             shuffleArray(incAnswers);
             setAnswerArray(incAnswers);
-        } else {
-            if (!gameOn) {
-                setQuestionText(optionsText);
-            } else if (score >= 10) {
-                setQuestionText("You Win!");
-            } else {
-                setQuestionText("You Lose!");
-            }
         }
     }, [questionNumber]);
 
@@ -169,8 +166,10 @@ function Game() {
 
             <Row>
                 <Col className='questionArea'>
-                    <h3>{questionText}</h3>
-                    {score > 0 &&
+                    {score < 1 && <h3>{questionText}</h3>}
+                    {score >= 1 && <h1>You Win!</h1>}
+                    {(score > 0 || opponentScore > 9) &&
+                        
                         <Button onClick={handlePlayAgainClick}>Play again?</Button>
                     }
                 </Col>
@@ -204,22 +203,18 @@ function Game() {
                                             </Dropdown.Toggle>
 
                                             <Dropdown.Menu>
-                                                <Dropdown.Item key={"&difficulty=easy"}  data-dif="&difficulty=easy" onClick={handleDifficultyClick}>Easy</Dropdown.Item>
+                                                <Dropdown.Item key={"&difficulty=easy"} data-dif="&difficulty=easy" onClick={handleDifficultyClick}>Easy</Dropdown.Item>
                                                 <Dropdown.Item key={"&difficulty=medium"} data-dif="&difficulty=medium" onClick={handleDifficultyClick}>Medium</Dropdown.Item>
                                                 <Dropdown.Item key={"&difficulty=hard"} data-dif="&difficulty=hard" onClick={handleDifficultyClick}>Hard</Dropdown.Item>
                                             </Dropdown.Menu>
                                         </Dropdown>
                                         <Button variant="primary" style={{ width: "100%" }} onClick={handlePlayClick}>Play!</Button>
                                     </div>
-
-
-
-
                                 }
 
                                 {gameOn && answerArray.map((results) => {
                                     return (
-                                        <Card.Text key={Math.floor(Math.random() * 1000)}>
+                                        <Card.Text key={Math.random() * 1000 + 100}>
                                             <Button className="bigButton" key={Math.floor(Math.random() * 100)} data-answer={results} onClick={handleAnswerClick}>
                                                 {results}
                                             </Button>
@@ -228,8 +223,8 @@ function Game() {
                                 })}
                                 {/* <h2>Score: {score}</h2> */}
                             </Card.Body>
-                            {/* {score}
-                            {opponentScore} */}
+                            {score}
+                            {opponentScore}
                         </Card>
                     }
                 </Col>
